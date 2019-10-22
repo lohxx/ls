@@ -1,4 +1,5 @@
 extern crate console;
+extern crate structopt;
 
 use std::{env, fs};
 use std::str::FromStr;
@@ -45,15 +46,6 @@ struct Ls{
     color: Colors,
 }
 
-fn exclude_hidden_files(files: Vec<String>, exclude: bool) -> Vec<String>{
-    if exclude{
-        files.drain_filter(|f| f.starts_with(".")).collect()::<Vec<String>>;
-    }
-
-    println!("{:?}", files);
-
-    files
-}
 
 fn color_output(set_color: Colors, str_output: String, color: Style) -> StyledObject<String> {
     let default_style = Style::new().white();
@@ -66,26 +58,32 @@ fn color_output(set_color: Colors, str_output: String, color: Style) -> StyledOb
     colored_output
 }
 
+fn exclude_hidden_files(files: Vec<String>, hide: bool){
+
+}
 
 fn list_dir(dir: Option<PathBuf>, output_color: Colors, show_all: bool) -> std::io::Result<()>{
     let mut childs_files: Vec<String> = Vec::new();
     let mut childs_directories: Vec<String> = Vec::new();
+    
+    for entry in dir.unwrap().read_dir()? {
+        let file = entry?;
+        let filename = file.file_name().into_string().unwrap();
 
-    for entry in fs::read_dir(dir.unwrap())? {
-        let filename = entry?.file_name().into_string().unwrap();
-
-        if fs::metadata(&filename)?.is_dir(){
-            childs_directories.push(filename);
-        }else{
-            childs_files.push(filename)
+        if file.metadata()?.is_dir(){
+           childs_directories.push(filename);
+        }
+        else{
+           childs_files.push(filename)
         }
     }
 
     let dir_style = Style::new().blue().bold();
 
-    let joinf: String = exclude_hidden_files(childs_files, show_all).join(" ");
-    let joind: String = exclude_hidden_files(childs_directories, show_all).join(" "); 
-    let joind: StyledObject = color_output(output_color, joind, dir_style);
+    let joinf: String = childs_files.join(" ");
+    let joind: String = childs_directories.join(" "); 
+    let joind: StyledObject<String> = color_output(
+        output_color, joind, dir_style);
 
     println!("{} {}", joinf, joind);
 
