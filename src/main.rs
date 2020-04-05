@@ -1,13 +1,14 @@
 extern crate console;
 extern crate structopt;
 
-use std::{env, fs};
+use std::io::Write;
+use std::env;
 use std::str::FromStr;
 use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use console::{Style, StyledObject};
+use console::*;
 
 
 #[derive(Debug)]
@@ -15,6 +16,22 @@ enum Colors {
     Always,
     Never,
     Auto
+}
+
+
+#[derive(StructOpt, Debug)]
+struct Rs{
+    #[structopt(parse(from_os_str))]
+    directory: Option<PathBuf>,
+
+    #[structopt(short, long)]
+    all:bool,
+
+    #[structopt(short="l", long="author")]
+    author: bool,
+
+    #[structopt(short="C", long="color", default_value="always")]
+    color: Colors,
 }
 
 
@@ -31,73 +48,63 @@ impl FromStr for Colors {
 }
 
 
-#[derive(StructOpt, Debug)]
-struct Ls{
-    #[structopt(parse(from_os_str))]
-    directory: Option<PathBuf>,
-
-    #[structopt(short, long)]
-    all:bool,
-
-    #[structopt(short="l", long="author")]
-    author: bool,
-
-    #[structopt(short="C", long="color", default_value="always")]
-    color: Colors,
-}
-
-
-fn color_output(set_color: Colors, str_output: String, color: Style) -> StyledObject<String> {
-    let default_style = Style::new().white();
-
-    let colored_output = match set_color {
-        Colors::Never => default_style.apply_to(str_output),
-        _ => color.apply_to(str_output)
-    };
-
-    colored_output
-}
-
-fn exclude_hidden_files(files: Vec<String>, hide: bool){
-
-}
-
-fn list_dir(dir: Option<PathBuf>, output_color: Colors, show_all: bool) -> std::io::Result<()>{
-    let mut childs_files: Vec<String> = Vec::new();
-    let mut childs_directories: Vec<String> = Vec::new();
-    
-    for entry in dir.unwrap().read_dir()? {
-        let file = entry?;
-        let filename = file.file_name().into_string().unwrap();
-
-        if file.metadata()?.is_dir(){
-           childs_directories.push(filename);
-        }
-        else{
-           childs_files.push(filename)
-        }
+impl Rs {
+    fn manager(&mut self) {
+        match &self.directory {
+            None => {
+                self.directory = Some(env::current_dir().unwrap());
+                self.list_dir();
+            },
+            Some(i) => {
+                self.list_dir();
+            }
+        };
     }
 
-    let dir_style = Style::new().blue().bold();
+    fn exclude_hidden_files(&self, mut directory_entries: Vec<String>) {
+        if !self.all {
+            for (index, entry) in directory_entries.iter().enumerate() {
+                if entry.starts_with('.') {
+                    directory_entries.remove(index);
+                }
+            }
+        }
 
-    let joinf: String = childs_files.join(" ");
-    let joind: String = childs_directories.join(" "); 
-    let joind: StyledObject<String> = color_output(
-        output_color, joind, dir_style);
+    }
 
-    println!("{} {}", joinf, joind);
+    fn list_dir(&self) {
+        let mut files: Vec<String> = Vec::new();
+        let mut directories: Vec<String> = Vec::new();
+        let dir_ref = self.directory.as_ref().unwrap();
 
-    Ok(())
+        for entry in dir_ref.read_dir().expect("read_dir call failed") {
+            if let Ok(entry) = entry {
+                let metadata = entry.metadata().unwrap();
+
+                if metadata.is_dir() {
+                    directories.push(
+                        entry.file_name().into_string().unwrap()
+                    );
+                }
+                if metadata.is_file() {
+                    files.push(
+                        entry.file_name().into_string().unwrap()
+                    );
+                }
+            }
+        }
+
+        self.exclude_hidden_files(files);
+        self.exclude_hidden_files(directories);
+
+        println!("{:?}", files);
+        println!("{:?}", directories);
+    }
+
 }
 
+
 fn main() {
-    let args = Ls::from_args();
-    println!("{:?}", args);
-
-    let cdir = match args.directory {
-        Some(i) => Some(i),
-        None => Some(env::current_dir().unwrap())
-    };
-
-    list_dir(cdir, args.color, args.all);
+    let mut command = Rs::from_args();    
+    command.manager();
 }
