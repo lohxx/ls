@@ -61,14 +61,21 @@ impl Rs {
         };
     }
 
-    fn exclude_hidden_files(&self, mut directory_entries: Vec<String>) {
+    fn exclude_hidden_files(&self, directory_entries: Vec<String>) -> Vec<String> {
+        let mut updated_dir = Vec::new();
+
         if !self.all {
             for (index, entry) in directory_entries.iter().enumerate() {
                 if entry.starts_with('.') {
-                    directory_entries.remove(index);
+                    continue
                 }
+                updated_dir.push(entry.to_string());
             }
+
+            return updated_dir
         }
+
+        directory_entries
 
     }
 
@@ -94,8 +101,8 @@ impl Rs {
             }
         }
 
-        self.exclude_hidden_files(files);
-        self.exclude_hidden_files(directories);
+        let files = self.exclude_hidden_files(files);
+        let directories = self.exclude_hidden_files(directories);
 
         println!("{:?}", files);
         println!("{:?}", directories);
