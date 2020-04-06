@@ -45,6 +45,11 @@ struct FileDs {
     metadata: std::fs::Metadata
 }
 
+impl FileDs {
+    fn format(&self, enable_colors: bool) -> Vec<StyledObject> {
+        
+    }
+}
 
 impl FromStr for Colors {
     type Err = std::string::ParseError;
@@ -74,28 +79,18 @@ impl Rs {
 
     fn list_dir(&self) {
         let mut files: Vec<FileDs> = Vec::new();
-        let mut directories: Vec<FileDs> = Vec::new();
+
         let dir_ref = self.directory.as_ref().unwrap();
 
         for entry in dir_ref.read_dir().expect("read_dir call failed") {
             if let Ok(entry) = entry {
                 let metadata = entry.metadata().unwrap();
                 let name = entry.file_name().into_string().unwrap();
-
-                let file_ds = FileDs {name, metadata};
-
-                if metadata.is_dir() {
-                    directories.push(file_ds);
-                }
-
-                if metadata.is_file() {
-                    files.push(file_ds);
-                }
+                files.push(FileDs {name, metadata});
             }
         }
 
         println!("{:?}", files);
-        println!("{:?}", directories);
     }
 
 }
