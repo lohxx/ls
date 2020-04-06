@@ -1,8 +1,11 @@
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 extern crate console;
 extern crate structopt;
 
-use std::io::Write;
 use std::env;
+use std::io::Write;
 use std::str::FromStr;
 use std::path::PathBuf;
 
@@ -10,6 +13,8 @@ use structopt::StructOpt;
 
 use console::*;
 
+const IMAGE_TYPES: [&str; 3] = ["png", "jpg", "jpge"];
+const COMPRESSION_TYPES: [&str; 3] = ["tar.gz", "zip", "xz"];
 
 #[derive(Debug)]
 enum Colors {
@@ -32,6 +37,12 @@ struct Rs{
 
     #[structopt(short="C", long="color", default_value="always")]
     color: Colors,
+}
+
+#[derive(Debug)]
+struct FileDs {
+    name: String,
+    metadata: std::fs::Metadata
 }
 
 
@@ -61,48 +72,27 @@ impl Rs {
         };
     }
 
-    fn exclude_hidden_files(&self, directory_entries: Vec<String>) -> Vec<String> {
-        let mut updated_dir = Vec::new();
-
-        if !self.all {
-            for (index, entry) in directory_entries.iter().enumerate() {
-                if entry.starts_with('.') {
-                    continue
-                }
-                updated_dir.push(entry.to_string());
-            }
-
-            return updated_dir
-        }
-
-        directory_entries
-
-    }
-
     fn list_dir(&self) {
-        let mut files: Vec<String> = Vec::new();
-        let mut directories: Vec<String> = Vec::new();
+        let mut files: Vec<FileDs> = Vec::new();
+        let mut directories: Vec<FileDs> = Vec::new();
         let dir_ref = self.directory.as_ref().unwrap();
 
         for entry in dir_ref.read_dir().expect("read_dir call failed") {
             if let Ok(entry) = entry {
                 let metadata = entry.metadata().unwrap();
+                let name = entry.file_name().into_string().unwrap();
+
+                let file_ds = FileDs {name, metadata};
 
                 if metadata.is_dir() {
-                    directories.push(
-                        entry.file_name().into_string().unwrap()
-                    );
+                    directories.push(file_ds);
                 }
+
                 if metadata.is_file() {
-                    files.push(
-                        entry.file_name().into_string().unwrap()
-                    );
+                    files.push(file_ds);
                 }
             }
         }
-
-        let files = self.exclude_hidden_files(files);
-        let directories = self.exclude_hidden_files(directories);
 
         println!("{:?}", files);
         println!("{:?}", directories);
