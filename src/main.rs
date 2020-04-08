@@ -45,21 +45,22 @@ struct FileDs {
     name: String,
     extension: Option<String>,
     metadata: std::fs::Metadata,
-    formated_name: Option<String>,
+    formated_name: Option<console::StyledObject<String>>,
 }
 
 impl FileDs {
     fn format(&self) {
         if self.metadata.is_dir() {
-            //self.formated_name: console::StyledObject = style(self.name).blue().bold();
-            println!("{:?}", style(&self.name).blue().bold());
+            self.formated_name = Some(style(&self.name).blue().bold());
         }
         if self.metadata.is_file() {
             match &self.extension {
                 Some(e) => {
                     println!("{:?}", e);
                 },
-                _ => {} 
+                _ => {
+                    self.formated_name = Some(style(&self.name).white());   
+                } 
             }
         }
     }
