@@ -110,7 +110,7 @@ impl Rs {
         }
 
         for entry in files.iter() {
-			entry.format();
+            entry.format();
         }
     }
 
