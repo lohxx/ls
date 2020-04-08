@@ -43,26 +43,26 @@ struct Rs{
 #[derive(Debug)]
 struct FileDs {
     name: String,
+    extension: Option<String>,
     metadata: std::fs::Metadata,
     formated_name: Option<String>,
-    extension: Option<String>,
 }
 
 impl FileDs {
-  	fn format(&self) {
-  		if self.metadata.is_dir() {
-  			//self.formated_name: console::StyledObject = style(self.name).blue().bold();
-  			println!("{:?}", style(&self.name).blue().bold());
-  		}
-  		if self.metadata.is_file() {
-  			match &self.extension {
-  				Some(e) => {
-  					println!("{:?}", e);
-  				},
-  				_ => {} 
-  			}
-  		}
-  	}
+    fn format(&self) {
+        if self.metadata.is_dir() {
+            //self.formated_name: console::StyledObject = style(self.name).blue().bold();
+            println!("{:?}", style(&self.name).blue().bold());
+        }
+        if self.metadata.is_file() {
+            match &self.extension {
+                Some(e) => {
+                    println!("{:?}", e);
+                },
+                _ => {} 
+            }
+        }
+    }
 }
 
 impl FromStr for Colors {
@@ -101,11 +101,11 @@ impl Rs {
                 let metadata = entry.metadata().unwrap();
                 let name = entry.file_name().into_string().unwrap();
 
-                let extension = Path::new(&name)
-                	.extension()
-                	.and_then(std::ffi::OsStr::to_str);
-                	
-                files.push(FileDs {name, metadata, formated_name: None, extension: extension});
+                // let extension = Path::new(&name)
+                // 	.extension()
+                // 	.and_then(std::ffi::OsStr::to_str);
+
+                files.push(FileDs {name, metadata, formated_name: None, extension: None});
             }
         }
 
