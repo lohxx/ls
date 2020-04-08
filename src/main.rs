@@ -118,6 +118,5 @@ impl Rs {
 
 
 fn main() {
-    let mut command = Rs::from_args();    
-    command.manager();
+     Rs::from_args().manager();
 }
