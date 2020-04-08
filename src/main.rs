@@ -7,7 +7,7 @@ extern crate structopt;
 use std::env;
 use std::io::Write;
 use std::str::FromStr;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use structopt::StructOpt;
 
@@ -39,16 +39,30 @@ struct Rs{
     color: Colors,
 }
 
+
 #[derive(Debug)]
 struct FileDs {
     name: String,
-    metadata: std::fs::Metadata
+    metadata: std::fs::Metadata,
+    formated_name: Option<String>,
+    extension: Option<String>,
 }
 
 impl FileDs {
-    fn format(&self, enable_colors: bool) -> Vec<StyledObject> {
-        
-    }
+  	fn format(&self) {
+  		if self.metadata.is_dir() {
+  			//self.formated_name: console::StyledObject = style(self.name).blue().bold();
+  			println!("{:?}", style(&self.name).blue().bold());
+  		}
+  		if self.metadata.is_file() {
+  			match &self.extension {
+  				Some(e) => {
+  					println!("{:?}", e);
+  				},
+  				_ => {} 
+  			}
+  		}
+  	}
 }
 
 impl FromStr for Colors {
@@ -86,11 +100,18 @@ impl Rs {
             if let Ok(entry) = entry {
                 let metadata = entry.metadata().unwrap();
                 let name = entry.file_name().into_string().unwrap();
-                files.push(FileDs {name, metadata});
+
+                let extension = Path::new(&name)
+                	.extension()
+                	.and_then(std::ffi::OsStr::to_str);
+                	
+                files.push(FileDs {name, metadata, formated_name: None, extension: extension});
             }
         }
 
-        println!("{:?}", files);
+        for entry in files.iter() {
+			entry.format();
+        }
     }
 
 }
