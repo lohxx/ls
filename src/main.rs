@@ -50,14 +50,14 @@ struct FileDs {
 
 impl FileDs {
     fn set_color(ext: &str, filename: &String) -> StyledObject<String> {
-        for img_type in PINK_OUTPUT_FILES.iter() {
-            if ext == *img_type {
+        for file_type in PINK_OUTPUT_FILES.iter() {
+            if ext == *file_type {
                 return style(filename.clone()).magenta().bold();
             }
         }
 
-        for comp in RED_OUTPUT_FILES.iter() {
-            if ext == *comp {
+        for file_type in RED_OUTPUT_FILES.iter() {
+            if ext == *file_type {
                 return style(filename.clone()).red().bold();
             }
         }
