@@ -6,6 +6,7 @@ extern crate structopt;
 
 use std::env;
 use std::io::Write;
+use std::ffi::OsStr;
 use std::str::FromStr;
 use std::path::{Path, PathBuf};
 
@@ -14,7 +15,7 @@ use structopt::StructOpt;
 use console::*;
 
 const IMAGE_TYPES: [&str; 3] = ["png", "jpg", "jpge"];
-const COMPRESSION_TYPES: [&str; 3] = ["tar.gz", "zip", "xz"];
+const COMPRESSION_TYPES: [&str; 4] = ["tar.gz", "zip", "xz", "deb"];
 
 #[derive(Debug)]
 enum Colors {
@@ -43,26 +44,50 @@ struct Rs{
 #[derive(Debug)]
 struct FileDs {
     name: String,
-    extension: Option<String>,
     metadata: std::fs::Metadata,
     formated_name: Option<console::StyledObject<String>>,
 }
 
 impl FileDs {
-    fn format(&self) {
-        if self.metadata.is_dir() {
-            self.formated_name = Some(style(&self.name).blue().bold());
-        }
-        if self.metadata.is_file() {
-            match &self.extension {
-                Some(e) => {
-                    println!("{:?}", e);
-                },
-                _ => {
-                    self.formated_name = Some(style(&self.name).white());   
-                } 
-            }
-        }
+	fn set_color(ext: &str, filename: &String) -> StyledObject<String> {
+		for img_type in IMAGE_TYPES.iter() {
+			if ext == *img_type {
+				return style(filename.clone()).magenta().bold();
+			}
+		}
+
+		for comp in COMPRESSION_TYPES.iter() {
+			if ext == *comp {
+				return style(filename.clone()).red().bold();
+			}
+		}
+		style(filename.clone()).white()	
+	}
+	
+    fn new(name: String, metadata: std::fs::Metadata) -> Self {
+    	let mut formated_name = None;
+		let extension = Path::new(&name)
+			.extension()
+			.and_then(OsStr::to_str);
+
+		match extension {
+			Some(e) => {
+				if metadata.is_dir() {
+					formated_name = Some(style(name.clone()).blue().bold());
+				} else {
+					formated_name = Some(Self::set_color(&extension.unwrap(), &name));	
+				}
+			},
+			None => {
+				formated_name = Some(style(name.clone()).white()); 
+			}
+		}
+
+		Self {
+			name,
+			metadata,
+			formated_name,
+		}
     }
 }
 
@@ -102,17 +127,13 @@ impl Rs {
                 let metadata = entry.metadata().unwrap();
                 let name = entry.file_name().into_string().unwrap();
 
-                // let extension = Path::new(&name)
-                // 	.extension()
-                // 	.and_then(std::ffi::OsStr::to_str);
-
-                files.push(FileDs {name, metadata, formated_name: None, extension: None});
+                files.push(FileDs::new(name, metadata));
             }
         }
 
-        for entry in files.iter() {
-            entry.format();
-        }
+        for entry in files {
+        	println!("{:?}", entry.formated_name);
+        }      
     }
 
 }
