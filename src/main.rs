@@ -14,8 +14,8 @@ use structopt::StructOpt;
 
 use console::*;
 
-const IMAGE_TYPES: [&str; 3] = ["png", "jpg", "jpge"];
-const COMPRESSION_TYPES: [&str; 4] = ["tar.gz", "zip", "xz", "deb"];
+const PINK_OUTPUT_FILES: [&str; 3] = ["png", "jpg", "jpge"];
+const RED_OUTPUT_FILES: [&str; 4] = ["tar.gz", "zip", "xz", "deb"];
 
 #[derive(Debug)]
 enum Colors {
@@ -49,45 +49,43 @@ struct FileDs {
 }
 
 impl FileDs {
-	fn set_color(ext: &str, filename: &String) -> StyledObject<String> {
-		for img_type in IMAGE_TYPES.iter() {
-			if ext == *img_type {
-				return style(filename.clone()).magenta().bold();
-			}
-		}
+    fn set_color(ext: &str, filename: &String) -> StyledObject<String> {
+        for img_type in PINK_OUTPUT_FILES.iter() {
+            if ext == *img_type {
+                return style(filename.clone()).magenta().bold();
+            }
+        }
 
-		for comp in COMPRESSION_TYPES.iter() {
-			if ext == *comp {
-				return style(filename.clone()).red().bold();
-			}
-		}
-		style(filename.clone()).white()	
-	}
-	
+        for comp in RED_OUTPUT_FILES.iter() {
+            if ext == *comp {
+                return style(filename.clone()).red().bold();
+            }
+        }
+        style(filename.clone()).white()	
+    }
+
     fn new(name: String, metadata: std::fs::Metadata) -> Self {
-    	let mut formated_name = None;
-		let extension = Path::new(&name)
-			.extension()
-			.and_then(OsStr::to_str);
+        let mut formated_name = None;
+        let extension = Path::new(&name)
+            .extension()
+            .and_then(OsStr::to_str);
 
-		match extension {
-			Some(e) => {
-				if metadata.is_dir() {
-					formated_name = Some(style(name.clone()).blue().bold());
-				} else {
-					formated_name = Some(Self::set_color(&extension.unwrap(), &name));	
-				}
-			},
-			None => {
-				formated_name = Some(style(name.clone()).white()); 
-			}
-		}
+        if metadata.is_dir() {
+            formated_name = Some(style(name.clone()).blue().bold());
+        }
 
-		Self {
-			name,
-			metadata,
-			formated_name,
-		}
+        match extension {
+            Some(e) => {
+                formated_name = Some(Self::set_color(&extension.unwrap(), &name));	
+            },
+            _ => ()
+        }
+
+        Self {
+            name,
+            metadata,
+            formated_name,
+        }
     }
 }
 
